@@ -9,7 +9,9 @@ var judger = require("../../lib/judger");
 judger.runExe(
     __dirname + "\\apb.exe",
     __dirname + "\\std.in",
-    __dirname + "\\std.out", function(err, buf) {
-    console.log(err);
-    console.log(buf);
+    __dirname + "\\std.out", function(err, handle) {
+    judger.watchProcess(handle, 1000, 65536, function(err, obj) {
+        console.log(err);
+        console.log(obj);
+    });
 });

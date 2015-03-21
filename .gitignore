@@ -32,4 +32,5 @@ node_modules
 *.swp
 .ropeproject
 build
+.idea
 

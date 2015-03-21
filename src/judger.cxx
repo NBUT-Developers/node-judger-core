@@ -19,6 +19,7 @@
 #include <v8.h>
 #include <nan.h>
 #include "exe_runner.h"
+#include "proc_watcher.h"
 using namespace v8;
 
 NAN_METHOD(RunExe)
@@ -66,16 +67,82 @@ NAN_METHOD(RunExe)
         NanReturnUndefined();
     }
 
-    Local<Object> proc_buffer = NanNewBufferHandle((char*)proc_info, sizeof(PROCESS_INFORMATION));
-    delete proc_info;
+    Local<Integer> proc_handle = NanNew<Integer>((int)proc_info);
+    NanReturnValue(proc_handle);
+}
 
-    NanReturnValue(proc_buffer);
+NAN_METHOD(WatchCode)
+{
+    NanScope();
+
+    if(args.Length() != 3)
+    {
+        NanThrowError("Wrong number of arguments.");
+        NanReturnUndefined();
+    }
+
+    PROCESS_INFORMATION* proc_handle = (PROCESS_INFORMATION*)args[0]->Uint32Value();
+    __int64 time_limit = args[1]->Uint32Value();
+    __int64 memo_limit = args[2]->Uint32Value();
+
+    CodeState code_state;
+    code_state.error_code[0] = '\0';
+    WatchCode(proc_handle->hProcess, time_limit, memo_limit, code_state, *proc_handle);
+
+    Local<Object> obj = NanNew<Object>();
+    obj->Set(NanNew<String>("time"), NanNew<Integer>((int)code_state.exe_time));
+    obj->Set(NanNew<String>("memo"), NanNew<Integer>((int)code_state.exe_memory));
+    obj->Set(NanNew<String>("code"), NanNew<Integer>((int)code_state.state));
+    if(code_state.error_code[0] != '\0')
+    {
+        obj->Set(NanNew<String>("msg"), NanNew<String>(code_state.error_code));
+    }
+
+    if(code_state.state != FINISHED && code_state.state != CONTINUE)
+    {
+        DebugActiveProcessStop(proc_handle->dwProcessId);
+        TerminateProcess(proc_handle->hProcess, 4);
+    }
+
+    NanReturnValue(obj);
+}
+
+NAN_METHOD(ReleaseProcHandle)
+{
+    NanScope();
+
+    if(args.Length() != 1)
+    {
+        NanThrowError("Wrong number of arguments.");
+        NanReturnUndefined();
+    }
+
+    PROCESS_INFORMATION* proc_handle = (PROCESS_INFORMATION*)args[0]->Uint32Value();
+   
+    try
+    {
+        CloseHandle(proc_handle->hThread);
+        CloseHandle(proc_handle->hProcess);
+        delete proc_handle;
+    }
+    catch(...)
+    {
+        // ignore...
+    }
+
+    NanReturnUndefined();
 }
 
 void Init(Handle<Object> exports)
 {
+    srand((unsigned)time(NULL));
+
     exports->Set(NanNew<String>("runExe"),
             NanNew<FunctionTemplate>(RunExe)->GetFunction());
+    exports->Set(NanNew<String>("watchCode"),
+            NanNew<FunctionTemplate>(WatchCode)->GetFunction());
+    exports->Set(NanNew<String>("releaseProcHandle"),
+            NanNew<FunctionTemplate>(ReleaseProcHandle)->GetFunction());
 }
 
 NODE_MODULE(judger, Init);

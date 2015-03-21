@@ -1,12 +1,12 @@
 /**
  * =====================================================================================
  *
- *       Filename:  exe_runner.h
+ *       Filename:  proc_watcher.h
  *
- *    Description:  The *.exe runner.
+ *    Description:  The process watcher.
  *
  *        Version:  1.0
- *        Created:  3/21/2015 6:33:13 PM
+ *        Created:  3/21/2015 11:27:02 PM
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -15,17 +15,16 @@
  *
  * =====================================================================================
  */
-#ifndef __EXE_RUNNER_H__
-#define __EXE_RUNNER_H__
+#ifndef __PROC_WATCHER_H__
+#define __PROC_WATCHER_H__
 #pragma once
 #include "common.h"
 
-void Terminate_(PROCESS_INFORMATION proc_info);
-PROCESS_INFORMATION* RunExe(const char* exe_path,
-        const char* command,
-        const char* std_input_path,
-        const char* output_path,
-        CodeState& code_state);
+bool WatchCode(const HANDLE process, 
+        const __int64 time_limit,
+        const __size memo_limit,
+        CodeState& code_state,
+        const PROCESS_INFORMATION proc_info);
 
 #endif
 
