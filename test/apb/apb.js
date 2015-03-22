@@ -4,14 +4,18 @@
  * Copyright (c) 2015 Huaban.com, all rights
  * reserved
  */
-var judger = require("../../lib/judger");
+var wrapper = require("../../lib/cppwrapper");
 
-judger.runExe(
+wrapper.runExe(
     __dirname + "\\apb.exe",
     __dirname + "\\std.in",
-    __dirname + "\\std.out", function(err, handle) {
-    judger.watchProcess(handle, 1000, 65536, function(err, obj) {
+    __dirname + "\\out.out", function(err, handle) {
+    wrapper.watchProcess(handle, 1000, 65536, function(err, obj) {
         console.log(err);
         console.log(obj);
+
+        var res = wrapper.answerState(__dirname + "\\std.out", __dirname + "\\out.out");
+        console.log(res);
     });
 });
+

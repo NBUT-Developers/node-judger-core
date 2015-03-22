@@ -28,7 +28,7 @@ node_modules
 .lock-wscript
 
 *.exe
-*.out
+out.out
 *.swp
 .ropeproject
 build

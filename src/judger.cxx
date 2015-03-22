@@ -22,6 +22,120 @@
 #include "proc_watcher.h"
 using namespace v8;
 
+DWORD GetRunSize_(const char* filename)
+{
+    static struct _stat output_info;
+    _stat(filename, &output_info);
+
+    return output_info.st_size;
+}
+
+NAN_METHOD(AnswerState)
+{
+    NanScope();
+    if(args.Length() != 2)
+    {
+        NanThrowError("Wrong number of arguments.");
+        NanReturnUndefined();
+    }
+
+    Local<String> std_output = NanNew(*NanAsciiString(args[0]));
+    Local<String> output = NanNew(*NanAsciiString(args[1]));
+
+    char* s_std_output = new char[std_output->Length() + 1];
+    char* s_output = new char[output->Length() + 1];
+
+    std_output->WriteAscii(s_std_output);
+    output->WriteAscii(s_output);
+
+    DWORD std_size = GetRunSize_(s_std_output);
+    DWORD new_size = GetRunSize_(s_output);
+
+    if(std_size * 2 < new_size)
+    {
+        delete []s_std_output;
+        delete []s_output;
+        NanReturnValue(NanNew<String>("OUTPUT_LIMIT_EXCEEDED"));
+    }
+
+    FILE *std = fopen(s_std_output, "r");
+    FILE *out = fopen(s_output, "r");
+
+    if(std == NULL || out == NULL)
+    {
+        if(std) fclose(std);
+        if(out) fclose(out);
+        delete []s_std_output;
+        delete []s_output;
+        NanReturnValue(NanNew<String>("SYSTEM_ERROR:No output file or no std output file."));
+    }
+
+    bool wa = false;
+    char tmp1, tmp2;
+    while(!feof(std))
+    {
+        tmp1 = fgetc(std);
+        tmp2 = fgetc(out);
+
+        // ignore win's line-end
+        while(tmp1 == '\r') tmp1 = fgetc(std);
+        while(tmp2 == '\r') tmp2 = fgetc(out);
+
+        if(tmp1 != tmp2)
+        {
+            wa = true;
+            break;
+        }
+    }
+
+    fclose(std);
+    fclose(out);
+
+    if(!wa)
+    {
+        delete []s_std_output;
+        delete []s_output;
+        NanReturnValue(NanNew<String>("ACCPETED"));
+    }
+
+    std = fopen(s_std_output, "r");
+    out = fopen(s_output, "r");
+
+    if(std == NULL || out == NULL)
+    {
+        if(std) fclose(std);
+        if(out) fclose(out);
+        delete []s_std_output;
+        delete []s_output;
+        NanReturnValue(NanNew<String>("SYSTEM_ERROR:No output file or no std output file."));
+    }
+
+    delete []s_std_output;
+    delete []s_output;
+
+    bool pe = true;
+    while(!feof(std))
+    {
+        tmp1 = fgetc(std);
+        tmp2 = fgetc(out);
+
+        // ignore PE characters
+        while(!feof(std) && (tmp1 == ' ' || tmp1 == '\n' || tmp1 == '\r')) tmp1 = fgetc(std);
+        while(!feof(out) && (tmp2 == ' ' || tmp2 == '\n' || tmp2 == '\r')) tmp2 = fgetc(out);
+
+        if(tmp1 != tmp2)
+        {
+            pe = false;
+            break;
+        }
+    }
+
+    fclose(std);
+    fclose(out);
+
+    NanReturnValue(NanNew<String>(pe ? "PRESENTATION_ERROR" : "WRONG_ANSWER"));
+}
+
 NAN_METHOD(RunExe)
 {
     NanScope();
@@ -143,6 +257,8 @@ void Init(Handle<Object> exports)
             NanNew<FunctionTemplate>(WatchCode)->GetFunction());
     exports->Set(NanNew<String>("releaseProcHandle"),
             NanNew<FunctionTemplate>(ReleaseProcHandle)->GetFunction());
+    exports->Set(NanNew<String>("answerState"),
+            NanNew<FunctionTemplate>(AnswerState)->GetFunction());
 }
 
 NODE_MODULE(judger, Init);
