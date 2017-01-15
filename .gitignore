@@ -34,3 +34,5 @@ out.out
 build
 .idea
 
+src.bak
+.vscode
