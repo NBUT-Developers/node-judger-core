@@ -1,10 +1,16 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-#include <windows.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string>
+#include <Windows.h>
+
+namespace NodeJudger {
+
 typedef SIZE_T __size;
+#define VALID_HANDLE(handle) (handle != INVALID_HANDLE_VALUE)
+#define SAFE_CLOSE_HANDLE(handle) { if(VALID_HANDLE(handle)) CloseHandle(handle); }
 
 enum StateEnum {
     FINISHED,
@@ -23,4 +29,8 @@ struct CodeState {
     StateEnum state;
     char error_code[32];
 };
+
+std::string GetLastErrorAsString();
+
+}
 #endif

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "runner.h"
 #include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,38 +7,17 @@
 #include <fcntl.h>
 #include <psapi.h>
 #include <sys/stat.h>
-#include <tlhelp32.h>
-#pragma comment(ib, "psapi.lib")
+#include <TlHelp32.h>
+#pragma comment(lib, "psapi.lib")
 
-std::string GetLastErrorAsString()
-{
-    //Get the error message, if any.
-    DWORD error_message_id = GetLastError();
-    if(error_message_id == 0) return std::string(); // No error message has been recorded
+namespace NodeJudger {
 
-    LPSTR message_buffer = nullptr;
-    size_t size = FormatMessageA(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, error_message_id,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message_buffer, 0, NULL);
-
-    std::string message(message_buffer, size);
-
-    // Free the buffer.
-    LocalFree(message_buffer);
-
-    return message;
-}
-
-HANDLE CreateChildProcess_(
+HANDLE RunExecutable(
         const char* exe_path,
         const char* command,
         const char* input,
         const char* output,
-        CodeState& code_state,
-        HANDLE& input_handle,
-        HANDLE& output_handle,
-        PROCESS_INFORMATION& proc_info)
+        CodeState& code_state)
 {
     // The SECURITY_ATTRIBUTES structure contains the security descriptor for an object
     // and specifies whether the handle retrieved by specifying this structure is
@@ -54,18 +34,22 @@ HANDLE CreateChildProcess_(
     // create file handles use SECURITY_ATRIBUTES
     //
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx
-    input_handle = output_handle = NULL;
+    HANDLE input_handle, output_handle;
+    input_handle = output_handle = INVALID_HANDLE_VALUE;
     input_handle = CreateFile(input, GENERIC_READ, 0, &sa, OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL, NULL);
     output_handle = CreateFile(output, GENERIC_WRITE, 0, &sa, OPEN_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
 
-    if(input_handle == INVALID_HANDLE_VALUE ||
-            output_handle == INVALID_HANDLE_VALUE)
+    if(!VALID_HANDLE(input_handle) || !VALID_HANDLE(output_handle))
     {
         code_state.state = SYSTEM_ERROR;
         strcpy(code_state.error_code, GetLastErrorAsString().c_str());
-        return NULL;
+        SAFE_CLOSE_HANDLE(input_handle);
+        SAFE_CLOSE_HANDLE(output_handle);
+        input_handle = INVALID_HANDLE_VALUE;
+        output_handle = INVALID_HANDLE_VALUE;
+        return INVALID_HANDLE_VALUE;
     }
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms686331(v=vs.85).aspx
@@ -92,18 +76,31 @@ HANDLE CreateChildProcess_(
 
     // create the child process
     //
+    // If the function succeeds, be sure to call the CloseHandle function to close the
+    // hProcess and hThread handles when you are finished with them. Otherwise, when
+    // the child process exits, the system cannot clean up the process structures for
+    // the child process because the parent process still has open handles to the child
+    // process. However, the system will close these handles when the parent process
+    // terminates, so the structures related to the child process object would be
+    // cleaned up at this point.
+    //
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms682425(v=vs.85).aspx
-    PROCESS_INFORMATION proc_info_;
-    bool flag = CreateProcessA(exec_path, (LPSTR)command, NULL, NULL, true,
-            DEBUG_ONLY_THIS_PROCESS, NULL, NULL, &startup_info, &proc_info_);
+    PROCESS_INFORMATION proc_info;
+    bool flag = CreateProcessA(exe_path, (LPSTR)command, NULL, NULL, true,
+            DEBUG_ONLY_THIS_PROCESS, NULL, NULL, &startup_info, &proc_info);
 
-    if(!flg)
+    SAFE_CLOSE_HANDLE(proc_info.hThread);
+    SAFE_CLOSE_HANDLE(input_handle);
+    SAFE_CLOSE_HANDLE(output_handle);
+
+    if(!flag)
     {
         code_state.state = SYSTEM_ERROR;
         strcpy(code_state.error_code, GetLastErrorAsString().c_str());
-        return NULL;
+        return INVALID_HANDLE_VALUE;
     }
 
-    proc_info = proc_info_;
     return proc_info.hProcess;
+}
+
 }
