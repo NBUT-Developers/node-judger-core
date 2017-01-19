@@ -31,6 +31,8 @@ struct CodeState {
 };
 
 std::string GetLastErrorAsString();
+std::string GetEnvironmentVar(LPCSTR key);
+std::string GetTempDirectory();
 
 }
 #endif
