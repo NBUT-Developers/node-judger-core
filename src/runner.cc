@@ -43,8 +43,9 @@ HANDLE RunExecutable(
 
     if(!VALID_HANDLE(input_handle) || !VALID_HANDLE(output_handle))
     {
+        std::string error = "Cannot open input file or output file: " + GetLastErrorAsString();
         code_state.state = SYSTEM_ERROR;
-        strcpy(code_state.error_code, GetLastErrorAsString().c_str());
+        strcpy(code_state.error_code, error.c_str());
         SAFE_CLOSE_HANDLE(input_handle);
         SAFE_CLOSE_HANDLE(output_handle);
         input_handle = INVALID_HANDLE_VALUE;
@@ -95,8 +96,9 @@ HANDLE RunExecutable(
 
     if(!flag)
     {
+        std::string error = "Cannot run executable: " + GetLastErrorAsString();
         code_state.state = SYSTEM_ERROR;
-        strcpy(code_state.error_code, GetLastErrorAsString().c_str());
+        strcpy(code_state.error_code, error.c_str());
         return INVALID_HANDLE_VALUE;
     }
 

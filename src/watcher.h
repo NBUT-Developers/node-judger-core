@@ -1,0 +1,14 @@
+#ifndef __WATCHER_H__
+#define __WATCHER_H__
+#include "common.h"
+
+namespace NodeJudger {
+
+bool WatchProcess(const HANDLE process,
+        const __int64 time_limit,
+        const __size memo_limit,
+        CodeState& code_state);
+
+};
+
+#endif

@@ -18,6 +18,7 @@
 //         console.log(res);
 //     });
 // });
+const fs = require("fs");
 
 const Judger = require("../../build/Release/judger.node");
 
@@ -25,6 +26,8 @@ Judger.run(
     __dirname + "\\apb.exe",
     "",
     __dirname + "\\std.in",
-    function(err) {
-        console.log(err);
+    1000,
+    65535,
+    function(err, result) {
+        console.log(err, result);
     });
