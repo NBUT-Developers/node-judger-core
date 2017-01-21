@@ -4,6 +4,9 @@
 
 namespace NodeJudger {
 
+// Some useful code
+//
+// https://www.codeproject.com/Articles/43682/Writing-a-basic-Windows-debugger
 bool WatchProcess(const HANDLE process,
         const __int64 time_limit,
         const __size memo_limit,

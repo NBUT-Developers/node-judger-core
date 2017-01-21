@@ -1,5 +1,6 @@
 #include "common.h"
 #include <v8.h>
+#include <Psapi.h>
 using namespace std;
 
 namespace NodeJudger {
@@ -60,6 +61,51 @@ string GetTempDirectory()
     }
 
     return path;
+}
+
+string GetDLLNameFromDebug(const LOAD_DLL_DEBUG_INFO& load_dll_info)
+{
+    BOOL success = FALSE;
+    char filename[MAX_PATH + 1];
+    HANDLE file_map;
+
+    DWORD file_size_hi = 0;
+    DWORD file_size_lo = GetFileSize(load_dll_info.hFile, &file_size_hi);
+
+    if(file_size_lo == 0 && file_size_hi == 0)
+    {
+        return "";
+    }
+
+    file_map = CreateFileMapping(load_dll_info.hFile,
+            NULL,
+            PAGE_READONLY,
+            0,
+            1,
+            NULL);
+
+    if(file_map)
+    {
+        void* mem = MapViewOfFile(file_map, FILE_MAP_READ, 0, 0, 1);
+
+        if(mem)
+        {
+            if(GetMappedFileName(GetCurrentProcess(),
+                    mem,
+                    filename,
+                    MAX_PATH))
+            {
+                UnmapViewOfFile(mem);
+                CloseHandle(file_map);
+                return filename;
+            }
+        }
+
+        UnmapViewOfFile(mem);
+        CloseHandle(file_map);
+    }
+
+    return "";
 }
 
 }

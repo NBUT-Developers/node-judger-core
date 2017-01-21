@@ -41,6 +41,7 @@ struct CodeState {
 std::string GetLastErrorAsString();
 std::string GetEnvironmentVar(LPCSTR key);
 std::string GetTempDirectory();
+std::string GetDLLNameFromDebug(const LOAD_DLL_DEBUG_INFO& load_dll_info);
 
 }
 #endif

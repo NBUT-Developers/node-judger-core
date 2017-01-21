@@ -8,6 +8,7 @@
 namespace NodeJudger {
 
 #define MAX_TIME_LIMIT_DELAY 200
+const bool __WATCHER_PRINT_DEBUG = (GetEnvironmentVar("JUDGE_DEBUG") == "true");
 
 inline __int64 GetRunTime_(HANDLE process)
 {
@@ -178,6 +179,15 @@ bool WatchProcess(const HANDLE process,
         switch(dbe.dwDebugEventCode)
         {
         case CREATE_PROCESS_DEBUG_EVENT:
+            if(__WATCHER_PRINT_DEBUG)
+            {
+                printf("Event: Process creation\n");
+                printf("  CREATE_PROCESS_DEBUG_INFO members:\n");
+                printf("    hFile:                  %08p\n", dbe.u.CreateProcessInfo.hFile);
+                printf("    hProcess:               %08p\n", dbe.u.CreateProcessInfo.hProcess);
+                printf("    hThread                 %08p\n", dbe.u.CreateProcessInfo.hThread);
+            }
+
             // With this event, the debugger receives the following handles:
             //   CREATE_PROCESS_DEBUG_INFO.hProcess - debuggee process handle
             //   CREATE_PROCESS_DEBUG_INFO.hThread  - handle to the initial thread of the debuggee process
@@ -204,6 +214,16 @@ bool WatchProcess(const HANDLE process,
 
         case LOAD_DLL_DEBUG_EVENT:
         {
+            std::string dll_name = GetDLLNameFromDebug(dbe.u.LoadDll);
+            if(__WATCHER_PRINT_DEBUG)
+            {
+                printf("Event: DLL loaded\n");
+                printf("  LOAD_DLL_DEBUG_INFO members:\n");
+                printf("    hFile:                  %08p\n", dbe.u.LoadDll.hFile);
+                printf("    lpBaseOfDll:            %08p\n", dbe.u.LoadDll.lpBaseOfDll);
+                printf("    DLLName:                %s\n", dll_name.c_str());
+            }
+
             // With this event, the debugger receives the following handle:
             //   LOAD_DLL_DEBUG_INFO.hFile    - handle to the DLL file 
             // 
@@ -213,12 +233,18 @@ bool WatchProcess(const HANDLE process,
 
             // And what's more
             // users are not allowed to load DLL
-            std::string error = "Code is up to load DLL.";
-            code_state.exe_time = -1;
-            code_state.exe_memory = -1;
-            ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
-            ExitAndSetError(process, code_state, DANGEROUS_CODE, error.c_str());
-            return false;
+            if(dll_name.find("\\ntdll.dll") == std::string::npos &&
+                    dll_name.find("\\kernel32.dll") == std::string::npos &&
+                    dll_name.find("\\KernelBase.dll") == std::string::npos &&
+                    dll_name.find("\\msvcrt.dll") == std::string::npos)
+            {
+                std::string error = "Code is up to load DLL.";
+                code_state.exe_time = -1;
+                code_state.exe_memory = -1;
+                ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
+                ExitAndSetError(process, code_state, DANGEROUS_CODE, error.c_str());
+                return false;
+            }
         }
 
         default: break;
