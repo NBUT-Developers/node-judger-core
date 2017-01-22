@@ -1,7 +1,7 @@
 {
-  "name": "judger",
+  "name": "judger-core",
   "version": "1.0.0",
-  "description": "The Online Judge System's judger core for node.js version.",
+  "description": "The Online Judge System's judger core for Node.js version. (Windows only so far)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
