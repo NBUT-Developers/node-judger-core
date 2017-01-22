@@ -241,7 +241,7 @@ bool WatchProcess(const HANDLE process,
                 std::string error = "Code is up to load DLL.";
                 code_state.exe_time = -1;
                 code_state.exe_memory = -1;
-                ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
+                //ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
                 ExitAndSetError(process, code_state, DANGEROUS_CODE, error.c_str());
                 return false;
             }
