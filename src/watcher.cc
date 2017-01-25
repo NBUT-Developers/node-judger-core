@@ -10,6 +10,7 @@ namespace NodeJudger {
 #define EXCEPTION_WX86_BREAKPOINT 0x4000001F
 #define MAX_TIME_LIMIT_DELAY 200
 const bool __WATCHER_PRINT_DEBUG = (GetEnvironmentVar("JUDGE_DEBUG") == "true");
+#define MAX(a, b) ((a) > (b) ? (a) : (b)
 
 inline __int64 GetRunTime_(HANDLE process)
 {
@@ -169,7 +170,7 @@ bool WatchProcess(const HANDLE process,
         {
             std::string error = "Cannot wait for debug event: " + GetLastErrorAsString();
             code_state.exe_time = time_limit + MAX_TIME_LIMIT_DELAY;
-            code_state.exe_memory = GetRunMemo_(process);
+            code_state.exe_memory = MAX(GetRunMemo_(process), code_state.exe_memory);
             ExitAndSetError(process, code_state, TIME_LIMIT_EXCEEDED_2, error.c_str());
             return false;
         }
@@ -244,8 +245,8 @@ bool WatchProcess(const HANDLE process,
                     dll_name.find("\\user32.dll") == std::string::npos)
             {
                 std::string error = "Code is up to load DLL.";
-                code_state.exe_time = -1;
-                code_state.exe_memory = -1;
+                code_state.exe_time = 0;
+                code_state.exe_memory = 0;
                 ExitAndSetError(process, code_state, DANGEROUS_CODE, error.c_str());
                 return false;
             }
@@ -259,8 +260,8 @@ bool WatchProcess(const HANDLE process,
         if(-1 == run_time)
         {
             std::string error = "Cannot get running time: " + GetLastErrorAsString();
-            code_state.exe_time = -1;
-            code_state.exe_memory = GetRunMemo_(process);
+            code_state.exe_time = 0;
+            code_state.exe_memory = MAX(GetRunMemo_(process), code_state.exe_memory);
             ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
             ExitAndSetError(process, code_state, SYSTEM_ERROR, error.c_str());
             return false;
@@ -272,14 +273,14 @@ bool WatchProcess(const HANDLE process,
         {
             std::string error = "Cannot get occupied memory: " + GetLastErrorAsString();
             code_state.exe_time = run_time;
-            code_state.exe_memory = -1;
+            code_state.exe_memory = 0;
             ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
             ExitAndSetError(process, code_state, SYSTEM_ERROR, error.c_str());
             return false;
         }
 
         code_state.exe_time = run_time;
-        code_state.exe_memory = run_memo;
+        code_state.exe_memory = MAX(code_state.exe_memory, run_memo);
 
         if(run_time > time_limit)
         {
