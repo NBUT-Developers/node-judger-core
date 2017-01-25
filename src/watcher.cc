@@ -7,6 +7,7 @@
 
 namespace NodeJudger {
 
+#define EXCEPTION_WX86_BREAKPOINT 0x4000001F
 #define MAX_TIME_LIMIT_DELAY 200
 const bool __WATCHER_PRINT_DEBUG = (GetEnvironmentVar("JUDGE_DEBUG") == "true");
 
@@ -237,12 +238,14 @@ bool WatchProcess(const HANDLE process,
                     dll_name.find("\\kernel32.dll") == std::string::npos &&
                     dll_name.find("\\KernelBase.dll") == std::string::npos &&
                     dll_name.find("\\msvcrt.dll") == std::string::npos &&
-                    dll_name.find("\\wow64.dll") == std::string::npos)
+                    dll_name.find("\\wow64.dll") == std::string::npos &&
+                    dll_name.find("\\wow64win.dll") == std::string::npos &&
+                    dll_name.find("\\wow64cpu.dll") == std::string::npos &&
+                    dll_name.find("\\user32.dll") == std::string::npos)
             {
                 std::string error = "Code is up to load DLL.";
                 code_state.exe_time = -1;
                 code_state.exe_memory = -1;
-                //ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_CONTINUE);
                 ExitAndSetError(process, code_state, DANGEROUS_CODE, error.c_str());
                 return false;
             }
@@ -301,7 +304,8 @@ bool WatchProcess(const HANDLE process,
             return true;
 
         case EXCEPTION_DEBUG_EVENT:
-            if(dbe.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT)
+            if(dbe.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT &&
+                    dbe.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_WX86_BREAKPOINT)
             {
                 SetRuntimeErrorCode_(code_state, dbe.u.Exception.ExceptionRecord.ExceptionCode);
                 ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
