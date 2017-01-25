@@ -236,7 +236,8 @@ bool WatchProcess(const HANDLE process,
             if(dll_name.find("\\ntdll.dll") == std::string::npos &&
                     dll_name.find("\\kernel32.dll") == std::string::npos &&
                     dll_name.find("\\KernelBase.dll") == std::string::npos &&
-                    dll_name.find("\\msvcrt.dll") == std::string::npos)
+                    dll_name.find("\\msvcrt.dll") == std::string::npos &&
+                    dll_name.find("\\wow64.dll") == std::string::npos)
             {
                 std::string error = "Code is up to load DLL.";
                 code_state.exe_time = -1;
