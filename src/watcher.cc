@@ -235,14 +235,15 @@ bool WatchProcess(const HANDLE process,
 
             // And what's more
             // users are not allowed to load DLL
-            if(dll_name.find("\\ntdll.dll") == std::string::npos &&
-                    dll_name.find("\\kernel32.dll") == std::string::npos &&
-                    dll_name.find("\\KernelBase.dll") == std::string::npos &&
-                    dll_name.find("\\msvcrt.dll") == std::string::npos &&
-                    dll_name.find("\\wow64.dll") == std::string::npos &&
-                    dll_name.find("\\wow64win.dll") == std::string::npos &&
-                    dll_name.find("\\wow64cpu.dll") == std::string::npos &&
-                    dll_name.find("\\user32.dll") == std::string::npos)
+            // if(dll_name.find("\\ntdll.dll") == std::string::npos &&
+            //         dll_name.find("\\kernel32.dll") == std::string::npos &&
+            //         dll_name.find("\\KernelBase.dll") == std::string::npos &&
+            //         dll_name.find("\\msvcrt.dll") == std::string::npos &&
+            //         dll_name.find("\\wow64.dll") == std::string::npos &&
+            //         dll_name.find("\\wow64win.dll") == std::string::npos &&
+            //         dll_name.find("\\wow64cpu.dll") == std::string::npos &&
+            //         dll_name.find("\\user32.dll") == std::string::npos)
+            if(!IsDLLSupported(dll_name))
             {
                 std::string error = "Code is up to load DLL.";
                 code_state.exe_time = 0;

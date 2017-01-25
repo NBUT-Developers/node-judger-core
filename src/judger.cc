@@ -121,6 +121,12 @@ NAN_METHOD(Run)
             memo_limit));
 }
 
+NAN_METHOD(AddSupportedDLL)
+{
+    v8::String::Utf8Value v8_dll_name(info[0]->ToString());
+    AddSupportedDLLName(*v8_dll_name);
+}
+
 }
 
 void InitJudge(v8::Local<v8::Object> exports)
@@ -128,6 +134,9 @@ void InitJudge(v8::Local<v8::Object> exports)
     Nan::Set(exports,
             Nan::New<v8::String>("run").ToLocalChecked(),
             Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeJudger::Run)).ToLocalChecked());
+    Nan::Set(exports,
+            Nan::New<v8::String>("addSupportedDLL").ToLocalChecked(),
+            Nan::GetFunction(Nan::New<v8::FunctionTemplate>(NodeJudger::AddSupportedDLL)).ToLocalChecked());
 }
 
 NODE_MODULE(judger, InitJudge);

@@ -1,6 +1,7 @@
 #include "common.h"
 #include <v8.h>
 #include <Psapi.h>
+#include <vector>
 using namespace std;
 
 namespace NodeJudger {
@@ -106,6 +107,25 @@ string GetDLLNameFromDebug(const LOAD_DLL_DEBUG_INFO& load_dll_info)
     }
 
     return "";
+}
+
+vector<string> __dlls;
+void AddSupportedDLLName(string name)
+{
+    __dlls.push_back(name);
+}
+
+bool IsDLLSupported(string dll_path)
+{
+    for(int i = 0; i < __dlls.size(); i++)
+    {
+        if(dll_path.indexOf(__dlls[i]) != string::npos)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

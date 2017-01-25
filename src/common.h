@@ -43,5 +43,8 @@ std::string GetEnvironmentVar(LPCSTR key);
 std::string GetTempDirectory();
 std::string GetDLLNameFromDebug(const LOAD_DLL_DEBUG_INFO& load_dll_info);
 
+void AddSupportedDLLName(std::string name);
+bool IsDLLSupported(std::string dll_path);
+
 }
 #endif
