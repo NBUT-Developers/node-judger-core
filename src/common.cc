@@ -119,7 +119,7 @@ bool IsDLLSupported(string dll_path)
 {
     for(int i = 0; i < __dlls.size(); i++)
     {
-        if(dll_path.indexOf(__dlls[i]) != string::npos)
+        if(dll_path.find(__dlls[i]) != string::npos)
         {
             return true;
         }
