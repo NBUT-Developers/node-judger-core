@@ -10,7 +10,7 @@ namespace NodeJudger {
 #define EXCEPTION_WX86_BREAKPOINT 0x4000001F
 #define MAX_TIME_LIMIT_DELAY 200
 const bool __WATCHER_PRINT_DEBUG = (GetEnvironmentVar("JUDGE_DEBUG") == "true");
-#define MAX(a, b) ((a) > (b) ? (a) : (b)
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 inline __int64 GetRunTime_(HANDLE process)
 {
